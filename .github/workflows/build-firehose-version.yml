@@ -100,3 +100,4 @@ jobs:
           STEPS="${STEPS//$'\r'/'%0D'}"
 
           echo "::notice title=Manually do it?::$STEPS"
+          
