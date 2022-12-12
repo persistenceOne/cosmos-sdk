@@ -16,6 +16,12 @@ on:
         type: boolean
         required: false
         default: false
+  # This workflow was first run using push event
+  # To make it available in the github workflow list
+  # https://stackoverflow.com/questions/63362126/github-actions-how-to-run-a-workflow-created-on-a-non-master-branch-from-the-wo#:~:text=Specifically%20for%20workflow_dispatch,at%2016%3A32
+  push:
+    branches:
+      - ajeet/fh-workflow
 
 env:
   p_tag: p-${{ inputs.tag }}-fh
