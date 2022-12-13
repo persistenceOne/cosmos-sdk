@@ -49,9 +49,9 @@ jobs:
           git fetch cosmos refs/tags/${{ inputs.tag }}:refs/tags/cosmos_${{ inputs.tag }} --no-tags
           git fetch gp refs/tags/${{ inputs.fh-tag }}:refs/tags/gp_${{ inputs.fh-tag }} --no-tags
           git fetch origin 'refs/tags/${{ env.P_TAG }}:refs/tags/${{ env.P_TAG }}' || echo ""
-          echo "tags=$(git tag -l | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "TAGS=$(git tag -l | tr '\n' ' ')" >> $GITHUB_ENV
 
-      - if: contains(env.tags, env.P_TAG)
+      - if: contains(env.TAGS, env.P_TAG)
         name: exit if tag already exists
         run: |
           echo "::error::Tag: $P_TAG already exists"
@@ -81,7 +81,7 @@ jobs:
           git tag ${{ env.P_TAG }}
           git push origin refs/tags/${{ env.P_TAG }}
           
-      - if: failure() && !inputs.dryrun && !contains(env.tags, env.P_TAG)
+      - if: failure() && !inputs.dryrun && !contains(env.TAGS, env.P_TAG)
         name: 'print manual steps'
         run: |
           STEPS=$(cat << EOF
