@@ -37,7 +37,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: add remotes
         run: |
@@ -107,4 +107,3 @@ jobs:
           STEPS="${STEPS//$'\n'/'%0A'}"
           STEPS="${STEPS//$'\r'/'%0D'}"
           echo "::notice title=Manually do it?::$STEPS"
-          
