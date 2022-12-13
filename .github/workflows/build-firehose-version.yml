@@ -24,7 +24,7 @@ on:
   #     - ajeet/fh-workflow
 
 env:
-  p_tag: p-${{ inputs.tag }}-fh
+  P_TAG: p-${{ inputs.tag }}-fh
 
 jobs:
   cosmos-sdk-fh:
@@ -45,13 +45,13 @@ jobs:
         run: |
           git fetch cosmos refs/tags/${{ inputs.tag }}:refs/tags/cosmos_${{ inputs.tag }} --no-tags
           git fetch gp refs/tags/${{ inputs.fh-tag }}:refs/tags/gp_${{ inputs.fh-tag }} --no-tags
-          git fetch origin 'refs/tags/${{ env.p_tag }}:refs/tags/${{ env.p_tag }}' || echo ""
+          git fetch origin 'refs/tags/${{ env.P_TAG }}:refs/tags/${{ env.P_TAG }}' || echo ""
           echo "tags=$(git tag -l | tr '\n' ' ')" >> $GITHUB_ENV
 
-      - if: contains(env.tags, env.p_tag)
+      - if: contains(env.tags, env.P_TAG)
         name: exit if tag already exists
         run: |
-          echo "::error::Tag: $p_tag already exists"
+          echo "::error::Tag: $P_TAG already exists"
           exit 1
 
       - name: print commit diff
@@ -73,12 +73,12 @@ jobs:
           if [[ '${{ steps.fetch_commits.outputs.commits }}' != '' ]]; then
             git cherry-pick ${{ steps.fetch_commits.outputs.commits }}
           else
-            echo "::warning title=No commit diff::No commit difference b/w tags; pushing tag ${{ env.p_tag }} which is identical to cosmos/${{ inputs.tag }}"
+            echo "::warning title=No commit diff::No commit difference b/w tags; pushing tag ${{ env.P_TAG }} which is identical to cosmos/${{ inputs.tag }}"
           fi
-          git tag ${{ env.p_tag }}
-          git push origin refs/tags/${{ env.p_tag }}
+          git tag ${{ env.P_TAG }}
+          git push origin refs/tags/${{ env.P_TAG }}
           
-      - if: failure() && !inputs.dryrun && !contains(env.tags, env.p_tag)
+      - if: failure() && !inputs.dryrun && !contains(env.tags, env.P_TAG)
         name: 'print manual steps'
         run: |
           STEPS=$(cat << EOF
@@ -96,14 +96,12 @@ jobs:
           => Apply commits and create new tag
           > git checkout cosmos_${{ inputs.tag }}
           > git cherry-pick $(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')
-          > git tag ${{ env.p_tag }}
-          > git push origin refs/tags/${{ env.p_tag }}
+          > git tag ${{ env.P_TAG }}
+          > git push origin refs/tags/${{ env.P_TAG }}
           EOF
           )
-
           STEPS="${STEPS//'%'/'%25'}"
           STEPS="${STEPS//$'\n'/'%0A'}"
           STEPS="${STEPS//$'\r'/'%0D'}"
-
           echo "::notice title=Manually do it?::$STEPS"
           
