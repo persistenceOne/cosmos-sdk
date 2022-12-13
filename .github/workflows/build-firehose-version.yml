@@ -98,7 +98,7 @@ jobs:
           
           => Apply commits and create new tag
           > git checkout cosmos_${{ inputs.tag }}
-          > git cherry-pick $(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')
+          > git cherry-pick \$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')
           > git tag ${{ env.P_TAG }}
           > git push origin refs/tags/${{ env.P_TAG }}
           EOF
