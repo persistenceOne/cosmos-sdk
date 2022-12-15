@@ -37,7 +37,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.WORKFLOW_TOKEN }}
+          token: ${{ github.token }}
 
       - name: add remotes
         run: |
@@ -70,7 +70,7 @@ jobs:
         run: echo "commits=$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
       - if: '!inputs.dryrun'
-        name: 'apply commits and create new tag'
+        name: 'apply commits'
         run: |
           git checkout cosmos_${{ inputs.tag }}
           if [[ '${{ steps.fetch_commits.outputs.commits }}' != '' ]]; then
@@ -78,6 +78,13 @@ jobs:
           else
             echo "::warning title=No commit diff::No commit difference b/w tags; pushing tag ${{ env.P_TAG }} which is identical to cosmos/${{ inputs.tag }}"
           fi
+
+      - if: '!inputs.dryrun'
+        name: 'remove .github dir and create the tag'
+        run: |
+          rm -rf .github
+          git add -A
+          git commit -m "remove .github dir (to be able to push the tag with default token)"
           git tag ${{ env.P_TAG }}
           git push origin refs/tags/${{ env.P_TAG }}
           
@@ -96,9 +103,14 @@ jobs:
           => Check commit diff
           > git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty='%h | %s [%an]'
           
-          => Apply commits and create new tag
+          => Apply commits
           > git checkout cosmos_${{ inputs.tag }}
           > git cherry-pick \$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')
+
+          => Remove .github dir and create the tag
+          > rm -rf .github
+          > git add -A
+          > git commit -m "remove .github dir (to be able to push the tag with default token)"
           > git tag ${{ env.P_TAG }}
           > git push origin refs/tags/${{ env.P_TAG }}
           EOF
