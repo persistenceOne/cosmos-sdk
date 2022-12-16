@@ -16,6 +16,7 @@ on:
         type: boolean
         required: false
         default: false
+        description: 'Setting this will only apply commits and run build'
 
 jobs:
   apply-firehose-cosmos-sdk-commits:
