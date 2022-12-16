@@ -1,0 +1,63 @@
+name: Apply firehose/cosmos-sdk version's commits
+branding:
+  icon: "git-commit"
+  color: "red"
+inputs:
+  tag:
+    description: 'cosmos/cosmos-sdk tag name'
+    required: true
+  fh-tag:
+    description: 'graphprotocol/cosmos-sdk firehose tag name'
+    required: true
+  print-diff:
+    description: 'weather to print commit diff or not (y/n)'
+    default: 'n'
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: set env
+      shell: bash
+      run: |
+        echo "P_TAG=p-${{ inputs.tag }}-fh" >> $GITHUB_ENV
+        echo "P_TAG: p-${{ inputs.tag }}-fh"
+    - name: add remotes
+      shell: bash
+      run: |
+        git remote add cosmos https://github.com/cosmos/cosmos-sdk.git
+        git remote add gp https://github.com/graphprotocol/cosmos-sdk.git
+    - name: fetch tags
+      shell: bash
+      run: |
+        git fetch cosmos refs/tags/${{ inputs.tag }}:refs/tags/cosmos_${{ inputs.tag }} --no-tags
+        git fetch gp refs/tags/${{ inputs.fh-tag }}:refs/tags/gp_${{ inputs.fh-tag }} --no-tags
+        git fetch origin 'refs/tags/${{ env.P_TAG }}:refs/tags/${{ env.P_TAG }}' || echo ""
+        echo "TAGS=$(git tag -l | tr '\n' ' ')" >> $GITHUB_ENV
+    - if: contains(env.TAGS, env.P_TAG)
+      name: exit if tag already exists
+      shell: bash
+      run: |
+        echo "::error::Tag: $P_TAG already exists"
+        exit 1
+    - name: print commit diff
+      if: ${{ inputs.print-diff == 'y' }}
+      shell: bash
+      run: |
+        echo "::notice title=Commit diff::$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty='%h | %s [%an]')"
+    - name: 'fetch commits'
+      shell: bash
+      id: fetch_commits
+      run: |
+        echo "commits=$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')" >> $GITHUB_OUTPUT
+    - name: 'apply commits'
+      shell: bash
+      run: |
+        git config user.name "${{ github.actor }}"
+        git config user.email "<>"
+        git checkout cosmos_${{ inputs.tag }}
+        if [[ '${{ steps.fetch_commits.outputs.commits }}' != '' ]]; then
+          git cherry-pick ${{ steps.fetch_commits.outputs.commits }}
+        else
+          echo "::error title=No commit diff::No commit difference b/w tags cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }}"
+          exit 1
+        fi

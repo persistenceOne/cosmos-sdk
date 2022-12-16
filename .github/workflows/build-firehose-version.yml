@@ -1,8 +1,5 @@
-# This workflow is not on master branch, so we have to run this using github CLI
-# Run: echo '{"tag": "v0.45.10", "fh-tag": "v0.45.6-fh"}' | gh workflow run build-firehose-version.yml --ref=ajeet/fh-workflow --json
-
-name: Build firehose version
-run-name: ${{ inputs.dryrun && '[dryrun] ' || ''}}Creating p-${{ inputs.tag }}-fh <> cosmos/${{ inputs.tag }}..graphprotocol/${{inputs.fh-tag}}
+name: Build cosmos-sdk firehose version
+run-name: ${{ inputs.dryrun && '[dryrun] ' || ''}}Building p-${{ inputs.tag }}-fh <> cosmos/${{ inputs.tag }}..graphprotocol/${{inputs.fh-tag}}
 
 on:
   workflow_dispatch:
@@ -19,77 +16,20 @@ on:
         type: boolean
         required: false
         default: false
-  # This workflow was first run using push event
-  # To make it available in the github workflow list
-  # https://stackoverflow.com/questions/63362126/github-actions-how-to-run-a-workflow-created-on-a-non-master-branch-from-the-wo#:~:text=Specifically%20for%20workflow_dispatch,at%2016%3A32
-  # push:
-  #   branches:
-  #     - ajeet/fh-workflow
-
-env:
-  P_TAG: p-${{ inputs.tag }}-fh
 
 jobs:
-  cosmos-sdk-fh:
+  apply-firehose-cosmos-sdk-commits:
+    name: Apply firehose/cosmos-sdk's commits
     runs-on: ubuntu-latest
-
     steps:
-      - name: checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/apply-firehose-commits
         with:
-          token: ${{ github.token }}
-
-      - name: add remotes
-        run: |
-          git remote add cosmos https://github.com/cosmos/cosmos-sdk.git
-          git remote add gp https://github.com/graphprotocol/cosmos-sdk.git
-
-      - name: fetch tags
-        run: |
-          git fetch cosmos refs/tags/${{ inputs.tag }}:refs/tags/cosmos_${{ inputs.tag }} --no-tags
-          git fetch gp refs/tags/${{ inputs.fh-tag }}:refs/tags/gp_${{ inputs.fh-tag }} --no-tags
-          git fetch origin 'refs/tags/${{ env.P_TAG }}:refs/tags/${{ env.P_TAG }}' || echo ""
-          echo "TAGS=$(git tag -l | tr '\n' ' ')" >> $GITHUB_ENV
-
-      - if: contains(env.TAGS, env.P_TAG)
-        name: exit if tag already exists
-        run: |
-          echo "::error::Tag: $P_TAG already exists"
-          exit 1
-
-      - name: print commit diff
-        run: echo "::notice title=Commit diff::$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty='%h | %s [%an]')"
-
-      - if: '!inputs.dryrun'
-        name: set git config
-        run: git config user.name "${{ github.actor }}"
-
-      - if: '!inputs.dryrun'
-        id: fetch_commits
-        name: 'fetch commits'
-        run: echo "commits=$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-      - if: '!inputs.dryrun'
-        name: 'apply commits'
-        run: |
-          git checkout cosmos_${{ inputs.tag }}
-          if [[ '${{ steps.fetch_commits.outputs.commits }}' != '' ]]; then
-            git cherry-pick ${{ steps.fetch_commits.outputs.commits }}
-          else
-            echo "::warning title=No commit diff::No commit difference b/w tags; pushing tag ${{ env.P_TAG }} which is identical to cosmos/${{ inputs.tag }}"
-          fi
-
-      - if: '!inputs.dryrun'
-        name: 'remove .github dir and create the tag'
-        run: |
-          rm -rf .github
-          git add -A
-          git commit -m "remove .github dir (to be able to push the tag with default token)"
-          git tag ${{ env.P_TAG }}
-          git push origin refs/tags/${{ env.P_TAG }}
-          
-      - if: failure() && !inputs.dryrun && !contains(env.TAGS, env.P_TAG)
-        name: 'print manual steps'
+          tag: ${{ inputs.tag }}
+          fh-tag: ${{ inputs.fh-tag }}
+          print-diff: 'y'
+      - name: 'Manually do it?'
+        if: always() && '!contains(env.TAGS, env.P_TAG)'
         run: |
           STEPS=$(cat << EOF
           => Add remotes
@@ -107,10 +47,13 @@ jobs:
           > git checkout cosmos_${{ inputs.tag }}
           > git cherry-pick \$(git log cosmos_${{ inputs.tag }}..gp_${{ inputs.fh-tag }} --pretty="%H" --reverse | tr '\n' ' ')
 
+          => Test builds
+          > LEDGER_ENABLED=false make build
+
           => Remove .github dir and create the tag
-          > rm -rf .github
+          > rm -rf .github/workflows
           > git add -A
-          > git commit -m "remove .github dir (to be able to push the tag with default token)"
+          > git commit -m "remove .github/workflows dir (to be able to push the tag with default token)"
           > git tag ${{ env.P_TAG }}
           > git push origin refs/tags/${{ env.P_TAG }}
           EOF
@@ -119,3 +62,42 @@ jobs:
           STEPS="${STEPS//$'\n'/'%0A'}"
           STEPS="${STEPS//$'\r'/'%0D'}"
           echo "::notice title=Manually do it?::$STEPS"
+
+  build-firehose-version:
+    name: Test build
+    needs: apply-firehose-cosmos-sdk-commits
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-arch: ["amd64", "arm", "arm64"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/apply-firehose-commits
+        with:
+          tag: ${{ inputs.tag }}
+          fh-tag: ${{ inputs.fh-tag }}
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.4
+      - name: 'Test build'
+        run: |
+          GOARCH=${{ matrix.go-arch }} LEDGER_ENABLED=false make build
+  
+  create-tag:
+    name: Create p-tag
+    if: '!inputs.dryrun'
+    needs: build-firehose-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/apply-firehose-commits
+        with:
+          tag: ${{ inputs.tag }}
+          fh-tag: ${{ inputs.fh-tag }}
+      - name: 'remove .github/workflows dir and create the tag'
+        run: |
+          rm -rf .github/workflows
+          git add -A
+          git commit -m "remove .github/workflows dir (to be able to push the tag with default token)"
+          git tag ${{ env.P_TAG }}
+          git push origin refs/tags/${{ env.P_TAG }}
