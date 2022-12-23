@@ -1,5 +1,6 @@
 name: Build cosmos-sdk firehose version
-run-name: ${{ inputs.dryrun && '[dryrun] ' || ''}}Building p-${{ inputs.tag }}-fh <> cosmos/${{ inputs.tag }}..graphprotocol/${{inputs.fh-tag}}
+run-name: ${{ inputs.dryrun && '[dryrun] ' || ''}}Building ${{ inputs.tag }}-pfh <> cosmos/${{ inputs.tag }}.
+  .graphprotocol/${{inputs.fh-tag}}
 
 on:
   workflow_dispatch:
