@@ -19,8 +19,8 @@ runs:
     - name: set env
       shell: bash
       run: |
-        echo "P_TAG=p-${{ inputs.tag }}-fh" >> $GITHUB_ENV
-        echo "P_TAG: p-${{ inputs.tag }}-fh"
+        echo "P_TAG=${{ inputs.tag }}-pfh" >> $GITHUB_ENV
+        echo "P_TAG: ${{ inputs.tag }}-pfh"
     - name: add remotes
       shell: bash
       run: |
