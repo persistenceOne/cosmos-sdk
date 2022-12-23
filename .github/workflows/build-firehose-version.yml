@@ -51,10 +51,7 @@ jobs:
           => Test builds
           > LEDGER_ENABLED=false make build
 
-          => Remove .github dir and create the tag
-          > rm -rf .github/workflows
-          > git add -A
-          > git commit -m "remove .github/workflows dir (to be able to push the tag with default token)"
+          => Create the tag
           > git tag ${{ env.P_TAG }}
           > git push origin refs/tags/${{ env.P_TAG }}
           EOF
