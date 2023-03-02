@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/version"
+	"github.com/figment-networks/extractor-cosmos"
 )
 
 const (
@@ -81,6 +82,7 @@ type Config struct {
 	Storage         *StorageConfig         `mapstructure:"storage"`
 	TxIndex         *TxIndexConfig         `mapstructure:"tx_index"`
 	Instrumentation *InstrumentationConfig `mapstructure:"instrumentation"`
+	Extractor       *extractor.Config      `mapstructure:"extractor"`
 }
 
 // DefaultConfig returns a default configuration for a CometBFT node
@@ -96,6 +98,7 @@ func DefaultConfig() *Config {
 		Storage:         DefaultStorageConfig(),
 		TxIndex:         DefaultTxIndexConfig(),
 		Instrumentation: DefaultInstrumentationConfig(),
+		Extractor:       extractor.DefaultConfig(),
 	}
 }
 
@@ -112,6 +115,7 @@ func TestConfig() *Config {
 		Storage:         TestStorageConfig(),
 		TxIndex:         TestTxIndexConfig(),
 		Instrumentation: TestInstrumentationConfig(),
+		Extractor:       extractor.DefaultConfig(),
 	}
 }
 
@@ -122,6 +126,7 @@ func (cfg *Config) SetRoot(root string) *Config {
 	cfg.P2P.RootDir = root
 	cfg.Mempool.RootDir = root
 	cfg.Consensus.RootDir = root
+	cfg.Extractor.RootDir = root
 	return cfg
 }
 
@@ -154,6 +159,9 @@ func (cfg *Config) ValidateBasic() error {
 	}
 	if !cfg.Consensus.CreateEmptyBlocks && cfg.Mempool.Type == MempoolTypeNop {
 		return fmt.Errorf("`nop` mempool does not support create_empty_blocks = false")
+	}
+	if err := cfg.Extractor.Validate(); err != nil {
+		return fmt.Errorf("error in [extractor] section: %w", err)
 	}
 	return nil
 }
@@ -547,7 +555,7 @@ type P2PConfig struct { //nolint: maligned
 	ExternalAddress string `mapstructure:"external_address"`
 
 	// Comma separated list of seed nodes to connect to
-	// We only use these if we can’t connect to peers in the addrbook
+	// We only use these if we can't connect to peers in the addrbook
 	Seeds string `mapstructure:"seeds"`
 
 	// Comma separated list of nodes to keep persistent connections to
@@ -985,11 +993,11 @@ type ConsensusConfig struct {
 	TimeoutPropose time.Duration `mapstructure:"timeout_propose"`
 	// How much timeout_propose increases with each round
 	TimeoutProposeDelta time.Duration `mapstructure:"timeout_propose_delta"`
-	// How long we wait after receiving +2/3 prevotes for “anything” (ie. not a single block or nil)
+	// How long we wait after receiving +2/3 prevotes for "anything" (ie. not a single block or nil)
 	TimeoutPrevote time.Duration `mapstructure:"timeout_prevote"`
 	// How much the timeout_prevote increases with each round
 	TimeoutPrevoteDelta time.Duration `mapstructure:"timeout_prevote_delta"`
-	// How long we wait after receiving +2/3 precommits for “anything” (ie. not a single block or nil)
+	// How long we wait after receiving +2/3 precommits for "anything" (ie. not a single block or nil)
 	TimeoutPrecommit time.Duration `mapstructure:"timeout_precommit"`
 	// How much the timeout_precommit increases with each round
 	TimeoutPrecommitDelta time.Duration `mapstructure:"timeout_precommit_delta"`
