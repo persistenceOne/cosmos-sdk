@@ -183,6 +183,7 @@ replace (
 
 retract (
 	// initial lsm version that has a bug
+	v0.47.4-lsm
 	v0.47.3-lsm
 	// revert fix https://github.com/cosmos/cosmos-sdk/pull/16331
 	v0.46.12
