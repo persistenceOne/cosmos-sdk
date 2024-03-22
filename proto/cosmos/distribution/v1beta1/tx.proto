@@ -193,6 +193,8 @@ message MsgCommunityPoolSpendResponse {}
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgWithdrawTokenizeShareRecordReward {
+  option (cosmos.msg.v1.signer) = "owner_address";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -210,6 +212,8 @@ message MsgWithdrawTokenizeShareRecordRewardResponse {}
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgWithdrawAllTokenizeShareRecordReward {
+  option (cosmos.msg.v1.signer) = "owner_address";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
