@@ -101,8 +101,6 @@ func NewUnbondingDelegationEntry(creationHeight int64, completionTime time.Time,
 		Balance:                 balance,
 		UnbondingId:             unbondingID,
 		UnbondingOnHoldRefCount: 0,
-		ValidatorBondFactor:     math.LegacyZeroDec(), // TODO: figure out
-		GlobalLiquidStakingCap:  math.LegacyZeroDec(), // TODO: figure out
 	}
 }
 

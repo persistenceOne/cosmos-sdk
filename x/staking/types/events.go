@@ -26,7 +26,8 @@ const (
 	AttributeKeyCompletionTime    = "completion_time"
 	AttributeKeyNewShares         = "new_shares"
 
-	AttributeKeyShareOwner    = "share_owner"
-	AttributeKeyShareRecordId = "share_record_id"
-	AttributeKeyAmount        = "amount"
+	AttributeKeyShareOwner      = "share_owner"
+	AttributeKeyShareRecordId   = "share_record_id"
+	AttributeKeyAmount          = "amount"
+	AttributeKeyTokenizedShares = "tokenized_shares"
 )

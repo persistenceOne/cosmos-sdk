@@ -258,6 +258,8 @@ message MsgUpdateParamsResponse {};
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgUnbondValidator {
+  option (cosmos.msg.v1.signer) = "validator_address";
+
   string validator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
@@ -270,6 +272,8 @@ message MsgUnbondValidatorResponse {}
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgTokenizeShares {
+  option (cosmos.msg.v1.signer) = "delegator_address";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -290,6 +294,8 @@ message MsgTokenizeSharesResponse {
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgRedeemTokensForShares {
+  option (cosmos.msg.v1.signer) = "delegator_address";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -308,6 +314,8 @@ message MsgRedeemTokensForSharesResponse {
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgTransferTokenizeShareRecord {
+  option (cosmos.msg.v1.signer) = "sender";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -362,6 +370,8 @@ message MsgEnableTokenizeSharesResponse {
 //
 // Since: cosmos-sdk 0.47-lsm
 message MsgValidatorBond {
+  option (cosmos.msg.v1.signer) = "delegator_address";
+
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 

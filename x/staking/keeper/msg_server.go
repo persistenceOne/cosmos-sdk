@@ -226,7 +226,7 @@ func (k msgServer) Delegate(goCtx context.Context, msg *types.MsgDelegate) (*typ
 		if err := k.SafelyIncreaseTotalLiquidStakedTokens(ctx, tokens, false); err != nil {
 			return nil, err
 		}
-		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares)
+		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares, false)
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +331,7 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 			return nil, err
 		}
 
-		if _, err := k.SafelyIncreaseValidatorLiquidShares(ctx, valDstAddr, dstShares); err != nil {
+		if _, err := k.SafelyIncreaseValidatorLiquidShares(ctx, valDstAddr, dstShares, false); err != nil {
 			return nil, err
 		}
 		if _, err := k.DecreaseValidatorLiquidShares(ctx, valSrcAddr, srcShares); err != nil {
@@ -548,7 +548,7 @@ func (k msgServer) CancelUnbondingDelegation(goCtx context.Context, msg *types.M
 		if err := k.SafelyIncreaseTotalLiquidStakedTokens(ctx, tokens, false); err != nil {
 			return nil, err
 		}
-		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares)
+		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares, false)
 		if err != nil {
 			return nil, err
 		}
@@ -733,7 +733,7 @@ func (k msgServer) TokenizeShares(goCtx context.Context, msg *types.MsgTokenizeS
 		if err := k.SafelyIncreaseTotalLiquidStakedTokens(ctx, msg.Amount.Amount, true); err != nil {
 			return nil, err
 		}
-		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares)
+		validator, err = k.SafelyIncreaseValidatorLiquidShares(ctx, valAddr, shares, true)
 		if err != nil {
 			return nil, err
 		}
@@ -817,6 +817,7 @@ func (k msgServer) TokenizeShares(goCtx context.Context, msg *types.MsgTokenizeS
 			sdk.NewAttribute(types.AttributeKeyShareOwner, msg.TokenizedShareOwner),
 			sdk.NewAttribute(types.AttributeKeyShareRecordId, fmt.Sprintf("%d", record.Id)),
 			sdk.NewAttribute(types.AttributeKeyAmount, msg.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyTokenizedShares, shareToken.String()),
 		),
 	)
 
@@ -868,6 +869,11 @@ func (k msgServer) RedeemTokensForShares(goCtx context.Context, msg *types.MsgRe
 		shares = delegation.Shares
 	}
 	tokens := validator.TokensFromShares(shares).TruncateInt()
+
+	// prevent redemption that returns a 0 amount
+	if tokens.IsZero() {
+		return nil, types.ErrTinyRedemptionAmount
+	}
 
 	// If this redemption is NOT from a liquid staking provider, decrement the total liquid staked
 	// If the redemption was from a liquid staking provider, the shares are still considered

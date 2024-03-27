@@ -602,7 +602,7 @@ func TestCheckExceedsValidatorLiquidStakingCap(t *testing.T) {
 			}
 
 			// Check whether the cap is exceeded
-			actualExceeds := app.StakingKeeper.CheckExceedsValidatorLiquidStakingCap(ctx, validator, tc.newLiquidShares)
+			actualExceeds := app.StakingKeeper.CheckExceedsValidatorLiquidStakingCap(ctx, validator, tc.newLiquidShares, false)
 			require.Equal(t, tc.expectedExceeds, actualExceeds, tc.name)
 		})
 	}
@@ -667,7 +667,7 @@ func TestSafelyIncreaseValidatorLiquidShares(t *testing.T) {
 
 	// Attempt to increase the validator liquid shares, it should throw an
 	// error that the validator bond cap was exceeded
-	_, err := app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, firstIncreaseAmount)
+	_, err := app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, firstIncreaseAmount, false)
 	require.ErrorIs(t, err, types.ErrInsufficientValidatorBondShares)
 	checkValidatorLiquidShares(initialLiquidShares, "shares after low bond factor")
 
@@ -677,12 +677,12 @@ func TestSafelyIncreaseValidatorLiquidShares(t *testing.T) {
 
 	// Try the increase again and check that it succeeded
 	expectedLiquidSharesAfterFirstStake := initialLiquidShares.Add(firstIncreaseAmount)
-	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, firstIncreaseAmount)
+	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, firstIncreaseAmount, false)
 	require.NoError(t, err)
 	checkValidatorLiquidShares(expectedLiquidSharesAfterFirstStake, "shares with cap loose bond cap")
 
 	// Attempt another increase, it should fail from the liquid staking cap
-	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, secondIncreaseAmount)
+	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, secondIncreaseAmount, false)
 	require.ErrorIs(t, err, types.ErrValidatorLiquidStakingCapExceeded)
 	checkValidatorLiquidShares(expectedLiquidSharesAfterFirstStake, "shares after liquid staking cap hit")
 
@@ -692,7 +692,7 @@ func TestSafelyIncreaseValidatorLiquidShares(t *testing.T) {
 
 	// Finally confirm that the increase succeeded this time
 	expectedLiquidSharesAfterSecondStake := expectedLiquidSharesAfterFirstStake.Add(secondIncreaseAmount)
-	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, secondIncreaseAmount)
+	_, err = app.StakingKeeper.SafelyIncreaseValidatorLiquidShares(ctx, valAddress, secondIncreaseAmount, false)
 	require.NoError(t, err, "no error expected after increasing liquid staking cap")
 	checkValidatorLiquidShares(expectedLiquidSharesAfterSecondStake, "shares after loose liquid stake cap")
 }

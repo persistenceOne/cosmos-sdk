@@ -503,18 +503,23 @@ message QueryTokenizeShareRecordsOwnedResponse {
   repeated TokenizeShareRecord records = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryTotalTokenizeSharedAssetsRequest is request type for the
-// Query/QueryTotalTokenizeSharedAssets RPC method.
+// QueryAllTokenizeShareRecordsRequest is request type for the
+// Query/QueryAllTokenizeShareRecords RPC method.
 //
 // Since: cosmos-sdk 0.47-lsm
-message QueryAllTokenizeShareRecordsRequest {}
+message QueryAllTokenizeShareRecordsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
-// QueryTotalTokenizeSharedAssetsResponse is response type for the
-// Query/QueryTotalTokenizeSharedAssets RPC method.
+// QueryAllTokenizeShareRecordsResponse is response type for the
+// Query/QueryAllTokenizeShareRecords RPC method.
 //
 // Since: cosmos-sdk 0.47-lsm
 message QueryAllTokenizeShareRecordsResponse {
   repeated TokenizeShareRecord records = 1 [(gogoproto.nullable) = false];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryLastTokenizeShareRecordIdRequest
