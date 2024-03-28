@@ -641,7 +641,7 @@ func (k Keeper) Delegate(
 	// Get or create the delegation object
 	delegation, found := k.GetDelegation(ctx, delAddr, validator.GetOperator())
 	if !found {
-		delegation = types.NewDelegation(delAddr, validator.GetOperator(), math.LegacyZeroDec(), false)
+		delegation = types.NewDelegation(delAddr, validator.GetOperator(), math.LegacyZeroDec())
 	}
 
 	// call the appropriate hook if present
