@@ -52,6 +52,13 @@ _These are a series of bug fixes for issues identified by OtterSec and Zellic du
 * [#22719](https://github.com/cosmos/cosmos-sdk/pull/22719) (x/staking-lsm) Fix LSM accounting ()`TotalLiquidStakedTokens`, and `ValidatorLiquidShares`) in `CreateValidator`.
 * [#22718](https://github.com/cosmos/cosmos-sdk/pull/22718) (x/staking-lsm) Check blocked addresses before sending tokenize shares rewards.
 
+## [v0.50.12](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.12) - 2025-02-20
+
+### Bug Fixes
+
+* [GHSA-x5vx-95h7-rv4p](https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-x5vx-95h7-rv4p) Fix Group module can halt chain when handling a malicious proposal
+
+
 ## [v0.50.11](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.11) - 2024-12-16
 
 ### Features
