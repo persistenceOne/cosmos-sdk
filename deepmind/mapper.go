@@ -9,9 +9,10 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cometbft/cometbft/types"
-	pbcosmos "github.com/figment-networks/proto-cosmos/pb/sf/cosmos/type/v1"
-	"github.com/golang/protobuf/proto"
+	pbcosmos "github.com/graphprotocol/proto-cosmos/pb/sf/cosmos/type/v1"
+	"google.golang.org/protobuf/proto"
 )
 
 func mapBlockID(bid types.BlockID) *pbcosmos.BlockID {
@@ -112,26 +113,17 @@ func mapEvidence(ed *types.EvidenceData) (*pbcosmos.EvidenceList, error) {
 	return result, nil
 }
 
-func mapResponseBeginBlock(rbb *abci.ResponseBeginBlock) *pbcosmos.ResponseBeginBlock {
-	result := &pbcosmos.ResponseBeginBlock{}
+func mapResponseFinalizeBlock(rfb *abci.ResponseFinalizeBlock) (*pbcosmos.ResponseFinalizeBlock, error) {
+	result := &pbcosmos.ResponseFinalizeBlock{
+		ConsensusParamUpdates: mapConsensusParams(rfb.ConsensusParamUpdates),
+		AppHash:               rfb.AppHash,
+	}
 
-	for _, ev := range rbb.Events {
+	for _, ev := range rfb.Events {
 		result.Events = append(result.Events, mapEvent(ev))
 	}
 
-	return result
-}
-
-func mapResponseEndBlock(reb *abci.ResponseEndBlock) (*pbcosmos.ResponseEndBlock, error) {
-	result := &pbcosmos.ResponseEndBlock{
-		ConsensusParamUpdates: mapConsensusParams(reb.ConsensusParamUpdates),
-	}
-
-	for _, ev := range reb.Events {
-		result.Events = append(result.Events, mapEvent(ev))
-	}
-
-	for _, vu := range reb.ValidatorUpdates {
+	for _, vu := range rfb.ValidatorUpdates {
 		val, err := mapValidatorUpdate(vu)
 		if err != nil {
 			return nil, err
@@ -139,10 +131,18 @@ func mapResponseEndBlock(reb *abci.ResponseEndBlock) (*pbcosmos.ResponseEndBlock
 		result.ValidatorUpdates = append(result.ValidatorUpdates, val)
 	}
 
+	// Note: TxResults are handled separately during transaction processing
+
 	return result, nil
 }
 
-func mapConsensusParams(cp *abci.ConsensusParams) *pbcosmos.ConsensusParams {
+// mapConsensusParams maps proto ConsensusParams to pbcosmos ConsensusParams
+func mapConsensusParams(cp *cmtproto.ConsensusParams) *pbcosmos.ConsensusParams {
+	// Handle nil input gracefully
+	if cp == nil {
+		return nil
+	}
+
 	result := &pbcosmos.ConsensusParams{}
 
 	if cp.Block != nil {
@@ -169,7 +169,7 @@ func mapConsensusParams(cp *abci.ConsensusParams) *pbcosmos.ConsensusParams {
 
 	if cp.Version != nil {
 		result.Version = &pbcosmos.VersionParams{
-			AppVersion: cp.Version.AppVersion,
+			AppVersion: cp.Version.App,
 		}
 	}
 
@@ -202,14 +202,16 @@ func mapEvent(ev abci.Event) *pbcosmos.Event {
 
 func mapVote(edv *types.Vote) *pbcosmos.EventVote {
 	return &pbcosmos.EventVote{
-		EventVoteType:    pbcosmos.SignedMsgType(edv.Type),
-		Height:           uint64(edv.Height),
-		Round:            edv.Round,
-		BlockId:          mapBlockID(edv.BlockID),
-		Timestamp:        mapTimestamp(edv.Timestamp),
-		ValidatorAddress: edv.ValidatorAddress,
-		ValidatorIndex:   edv.ValidatorIndex,
-		Signature:        edv.Signature,
+		EventVoteType:      pbcosmos.SignedMsgType(edv.Type),
+		Height:             uint64(edv.Height),
+		Round:              edv.Round,
+		BlockId:            mapBlockID(edv.BlockID),
+		Timestamp:          mapTimestamp(edv.Timestamp),
+		ValidatorAddress:   edv.ValidatorAddress,
+		ValidatorIndex:     edv.ValidatorIndex,
+		Signature:          edv.Signature,
+		Extension:          edv.Extension,
+		ExtensionSignature: edv.ExtensionSignature,
 	}
 }
 
@@ -231,6 +233,17 @@ func mapSignature(s types.CommitSig) (*pbcosmos.CommitSig, error) {
 		ValidatorAddress: s.ValidatorAddress.Bytes(),
 		Timestamp:        mapTimestamp(s.Timestamp),
 		Signature:        s.Signature,
+	}, nil
+}
+
+func mapExtendedSignature(s types.ExtendedCommitSig) (*pbcosmos.ExtendedCommitSig, error) {
+	return &pbcosmos.ExtendedCommitSig{
+		BlockIdFlag:        pbcosmos.BlockIDFlag(s.BlockIDFlag),
+		ValidatorAddress:   s.ValidatorAddress.Bytes(),
+		Timestamp:          mapTimestamp(s.Timestamp),
+		Signature:          s.Signature,
+		Extension:          s.Extension,
+		ExtensionSignature: s.ExtensionSignature,
 	}, nil
 }
 

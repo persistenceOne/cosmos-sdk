@@ -9,7 +9,6 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0
 	github.com/figment-networks/extractor-cosmos v0.1.0
-	github.com/figment-networks/proto-cosmos v0.1.0
 	github.com/fortytw2/leaktest v1.3.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-kit/log v0.2.1
@@ -17,6 +16,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/orderedcode v0.0.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/graphprotocol/proto-cosmos v0.1.0
 	github.com/informalsystems/tm-load-test v1.3.0
 	github.com/lib/pq v1.10.9
 	github.com/minio/highwayhash v1.0.3
@@ -156,4 +156,12 @@ retract (
 	[v0.38.0, v0.38.2]
 )
 
-require github.com/cosmos/cosmos-proto v1.0.0-alpha7 // indirect
+require (
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
+	github.com/streamingfast/pbgo v0.0.6-0.20250120164644-a58d8066ab4b // indirect
+)
+
+// Replace directive using the module's *declared* path on the left
+replace github.com/graphprotocol/proto-cosmos => github.com/persistenceOne/proto-cosmos v0.2.0-exp-v2
+
+replace github.com/figment-networks/proto-cosmos => github.com/persistenceOne/proto-cosmos v0.2.0-exp-v2

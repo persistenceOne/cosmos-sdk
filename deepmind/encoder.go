@@ -6,8 +6,9 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/cometbft/cometbft/types"
-	pbcosmos "github.com/figment-networks/proto-cosmos/pb/sf/cosmos/type/v1"
-	"github.com/golang/protobuf/proto"
+	pbcosmos "github.com/graphprotocol/proto-cosmos/pb/sf/cosmos/type/v1"
+
+	"google.golang.org/protobuf/proto"
 )
 
 func encodeBlock(bh types.EventDataNewBlock) ([]byte, error) {
@@ -16,14 +17,16 @@ func encodeBlock(bh types.EventDataNewBlock) ([]byte, error) {
 		return nil, err
 	}
 
-	mappedCommitSignatures, err := mapSignatures(bh.Block.LastCommit.Signatures)
+	// Map regular commit signatures
+	mappedCommitSigs, err := mapSignatures(bh.Block.LastCommit.Signatures)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mapping commit signatures: %w", err)
 	}
 
-	mappedResponseEndBlock, err := mapResponseEndBlock(&bh.ResultEndBlock)
+	// Map the FinalizeBlock response
+	mappedResponseFinalizeBlock, err := mapResponseFinalizeBlock(&bh.ResultFinalizeBlock)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mapping finalize block response: %w", err)
 	}
 
 	nb := &pbcosmos.Block{
@@ -41,7 +44,7 @@ func encodeBlock(bh types.EventDataNewBlock) ([]byte, error) {
 			ValidatorsHash:     bh.Block.Header.ValidatorsHash,
 			NextValidatorsHash: bh.Block.Header.NextValidatorsHash,
 			ConsensusHash:      bh.Block.Header.ConsensusHash,
-			AppHash:            bh.Block.Header.AppHash,
+			AppHash:            bh.Block.Header.AppHash, // Keep header AppHash for now
 			LastResultsHash:    bh.Block.Header.LastResultsHash,
 			EvidenceHash:       bh.Block.Header.EvidenceHash,
 			ProposerAddress:    bh.Block.Header.ProposerAddress,
@@ -52,10 +55,10 @@ func encodeBlock(bh types.EventDataNewBlock) ([]byte, error) {
 			Height:     bh.Block.LastCommit.Height,
 			Round:      bh.Block.LastCommit.Round,
 			BlockId:    mapBlockID(bh.Block.LastCommit.BlockID),
-			Signatures: mappedCommitSignatures,
+			Signatures: mappedCommitSigs, // Use regular signatures
 		},
-		ResultBeginBlock: mapResponseBeginBlock(&bh.ResultBeginBlock),
-		ResultEndBlock:   mappedResponseEndBlock,
+		// ResultBeginBlock is removed
+		ResultFinalizeBlock: mappedResponseFinalizeBlock, // Use existing field name for FinalizeBlock data
 	}
 
 	return proto.Marshal(nb)
